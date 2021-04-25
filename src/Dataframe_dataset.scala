@@ -4,6 +4,7 @@ import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import java.sql.Timestamp
 
+// for converting dataframe to dataset
 case class OrdersData  (order_id : Int,
                         order_date : Timestamp,
                         order_customer_id : Int,
@@ -23,7 +24,7 @@ object Dataframe_dataset extends App {
   .option("inferschema",true)
   .csv("C:/Users/Pramanik/Documents/Projects/spark/orders-201019-002101.csv")
   
-  ordersdf.filter("order > 10000") // Errors out at complied time because no column name "order" exists
+  ordersdf.filter("order > 10000") // Errors out at compile time because no column name "order" exists
   
   
   import spark.implicits._ // needed to convert dataframe <> dataset , should be created after creating session
