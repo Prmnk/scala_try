@@ -61,7 +61,7 @@ object Dataframe_structtype extends App {
    newdf.write 
   // .format("json") default parquet
    .partitionBy("Country", "weeknum") 
-   //.bucketBy(4,"numinvoices")
+   //.bucketBy(4,"numinvoices") // works only when saveAsTable is used
    .option("maxRecordsPerFile",20)
    .mode(SaveMode.Overwrite)   // Append
    .option("path","C:/Users/Pramanik/Documents/Projects/spark/output_par")   
