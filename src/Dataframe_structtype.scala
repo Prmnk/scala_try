@@ -1,15 +1,16 @@
-import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
+
+
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
-import org.apache.spark.sql.types.TimestampType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import java.sql.Timestamp
-import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.types.TimestampType
 
 //case class order(order_id: Int, order_date: Timestamp, customer_id: Int, order_status : String)
 
@@ -50,14 +51,19 @@ object Dataframe_structtype extends App {
   .option("mode","DROPMALFORMED") 
   .load
   
-  import spark.implicits._
   
+  val  newdf = orderdf.repartition(4)
+  
+  println(newdf.rdd.getNumPartitions)
   
   // write data to a file and partition it
   
-   orderdf.write   
-   .partitionBy("Country", "weeknum")   
-   .mode(SaveMode.Overwrite)   
+   newdf.write 
+  // .format("json") default parquet
+   .partitionBy("Country", "weeknum") 
+   //.bucketBy(4,"numinvoices")
+   .option("maxRecordsPerFile",20)
+   .mode(SaveMode.Overwrite)   // Append
    .option("path","C:/Users/Pramanik/Documents/Projects/spark/output_par")   
    .save()
    
