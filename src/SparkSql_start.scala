@@ -1,5 +1,7 @@
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._ // must for using column/col
+
 
 
 object SparkSql_start extends App {
@@ -20,8 +22,14 @@ object SparkSql_start extends App {
   
   val resultdf = spark.sql("Select * from orders order by 1 desc limit 1000")
   
-  resultdf.show
+  orderDf.select("order_id","order_date").show()
   
+  import spark.implicits._
+  
+  orderDf.select(column("order_id"),col("order_date"), $"order_customer_id",'order_status).show()
+  
+  resultdf.show
+  /*
   resultdf.write
   .format("csv")
   //.mode(SaveMode.Overwrite) 
@@ -32,7 +40,7 @@ object SparkSql_start extends App {
   .saveAsTable("order_db.order_tbl")
   
   spark.catalog.listTables("order_db").show()
-  
+  */
   spark.stop
   
 }
