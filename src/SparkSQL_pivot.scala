@@ -21,7 +21,15 @@ object SparkSQL_pivot extends App {
    
   loginfo.createOrReplaceTempView("loginfo")
   
-  spark.sql("Select level, date_format(datetime, 'MMMM') as dt , count(*) from loginfo group by level , date_format(datetime, 'MMMM') limit 10").show()
+  val df1 = spark.sql("Select level, date_format(datetime, 'MMMM') as month , count(*) from loginfo group by level , date_format(datetime, 'MMMM') limit 10")
   
+  val cols = List("January","April","August","December","February","July","June","March","May","November","October","September")
+  
+  spark.sql("Select level, date_format(datetime, 'MMMM') as month , date_format(datetime, 'M') as monthnum from loginfo ")
+  .groupBy("level")
+  .pivot("month",cols)
+  .count().show()
+  
+ 
   
 }
