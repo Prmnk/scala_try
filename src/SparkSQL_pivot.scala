@@ -3,6 +3,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.SaveMode
 
 object SparkSQL_pivot extends App {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -28,8 +29,9 @@ object SparkSQL_pivot extends App {
   spark.sql("Select level, date_format(datetime, 'MMMM') as month , date_format(datetime, 'M') as monthnum from loginfo ")
   .groupBy("level")
   .pivot("month",cols)
-  .count().show()
+  .count()
   
+  spark.stop()
  
   
 }
