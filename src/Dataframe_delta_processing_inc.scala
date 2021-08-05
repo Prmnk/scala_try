@@ -1,3 +1,8 @@
+
+
+
+  
+
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.spark.SparkConf
@@ -11,13 +16,13 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SaveMode
 
 
-object Dataframe_Fact_Pivot extends App {
+object Dataframe_delta_processing_inc extends App {
   
   Logger.getLogger("org").setLevel(Level.ERROR)
   
   val sparkConf = new SparkConf
   
-  sparkConf.set("spark.app.name","fact_pivot").set("spark.master","local[2]").set("spark.sql.sources.partitionOverwriteMode", "dynamic")
+  sparkConf.set("spark.app.name","fact_pivot_del").set("spark.master","local[2]").set("spark.sql.sources.partitionOverwriteMode", "dynamic")
  
   
   val spark = SparkSession.builder.config(sparkConf).getOrCreate()
@@ -54,7 +59,7 @@ object Dataframe_Fact_Pivot extends App {
   .option("header",true)
   .option("inferschema",false) // true if schema not defined
   .option("mode", "PERMISSIVE") // default value
-  .option("path","C:/Users/Pramanik/Desktop/files_dbk/entity_attribute.csv")
+  .option("path","C:/Users/Pramanik/Desktop/files_dbk/entity_attribute_delta.csv")
   .load()
   .withColumnRenamed("attribute_id","attribute_id_a")
   .withColumnRenamed("entity_id","entity_id_a")
@@ -77,25 +82,36 @@ object Dataframe_Fact_Pivot extends App {
   val jointype2 = "inner"
   val df_entityattribute_final = df_entityattribute_a.join(broadcast(entity),joincondition2,jointype2)
   
-  df_entityattribute_final
-  .select(column("Entity_ID"),column("Entity_name"),col("attribute_name"),col("attribute_val"))
-  .show()
-  
-  //df_entityattribute_final.show()
-  df_entityattribute_final.createOrReplaceTempView("df_entityattribute_final")
-  
-  val cols = List("ExcaliburWellID","WorkingInterest","SHLatitude")
-  
-  val df =  spark.sql("Select Entity_ID,Entity_name, attribute_name, attribute_val from df_entityattribute_final ")
-  .groupBy("Entity_ID","Entity_name")
-  .pivot("attribute_name",cols)
-  .agg(max("attribute_val"))
+  var parts = df_entityattribute_final
+  .select(col("attribute_name")).distinct()
+  .collect().map(_(0)).toList
   
   
-   df.repartition(1)
+  var finalh  = "C:/Users/Pramanik/Desktop/files_dbk/warehouse/aggregate/attribute_name={" 
+  parts.foreach(finalh += _+",")
+      
+  val lik = finalh.substring(0, finalh.length()-1)+"}/*"
+  println(lik)
+  val entityattribute_old = spark.read
+  .option("header",true)
+  .option("inferschema",false) // true if schema not defined
+  .option("mode", "PERMISSIVE") // default value
+  .csv(lik)
+  .withColumnRenamed("attribute_id","attribute_id_c")
+  .withColumnRenamed("entity_id","entity_id_c")
+  
+  
+  entityattribute_old.show()
+  
+  //val cols = List("ExcaliburWellID","WorkingInterest","SHLatitude")
+  
+  //val df =  df_entityattribute_final.where()
+  
+  
+   df_entityattribute_final.repartition(1)
    .write 
    .format("csv")
-   //.partitionBy("attribute_name")
+   .partitionBy("attribute_name")
    .mode(SaveMode.Overwrite)  
    .option("path","C:/Users/Pramanik/Desktop/files_dbk/warehouse/aggregate")   
    .save()

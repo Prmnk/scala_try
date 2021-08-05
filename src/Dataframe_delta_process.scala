@@ -1,3 +1,4 @@
+
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.spark.SparkConf
@@ -11,7 +12,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SaveMode
 
 
-object Dataframe_Fact_Pivot extends App {
+object Dataframe_delta_process extends App {
   
   Logger.getLogger("org").setLevel(Level.ERROR)
   
@@ -81,21 +82,16 @@ object Dataframe_Fact_Pivot extends App {
   .select(column("Entity_ID"),column("Entity_name"),col("attribute_name"),col("attribute_val"))
   .show()
   
-  //df_entityattribute_final.show()
-  df_entityattribute_final.createOrReplaceTempView("df_entityattribute_final")
   
-  val cols = List("ExcaliburWellID","WorkingInterest","SHLatitude")
+  //val cols = List("ExcaliburWellID","WorkingInterest","SHLatitude")
   
-  val df =  spark.sql("Select Entity_ID,Entity_name, attribute_name, attribute_val from df_entityattribute_final ")
-  .groupBy("Entity_ID","Entity_name")
-  .pivot("attribute_name",cols)
-  .agg(max("attribute_val"))
+  //val df =  df_entityattribute_final.where()
   
   
-   df.repartition(1)
+   df_entityattribute_final.repartition(1)
    .write 
    .format("csv")
-   //.partitionBy("attribute_name")
+   .partitionBy("attribute_name")
    .mode(SaveMode.Overwrite)  
    .option("path","C:/Users/Pramanik/Desktop/files_dbk/warehouse/aggregate")   
    .save()
